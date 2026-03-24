@@ -3,169 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dad's 28-Photo Quest</title>
+    <title>Dad's Birthday Quest</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #4a7c44; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        body { margin: 0; overflow: hidden; background: #4a7c44; font-family: sans-serif; touch-action: none; }
         canvas { display: block; }
-        
-        /* UI ELEMENTS */
-        #ui-top { position: absolute; top: 10px; width: 100%; text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); pointer-events: none; z-index: 10; }
-        #counter { position: absolute; top: 60px; width: 100%; text-align: center; color: #FFD700; font-weight: bold; z-index: 10; font-size: 18px; }
-        
-        /* RESET BUTTON if lost */
-        #reset-pos { position: absolute; top: 100px; left: 10px; padding: 10px; background: rgba(0,0,0,0.5); color: white; border: 1px solid white; border-radius: 5px; font-size: 12px; cursor: pointer; z-index: 30; }
-
-        /* CONTROLS */
-        #controls { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 20; }
-        .side-btns { display: flex; gap: 50px; }
-        .ctrl-btn { width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); color: white; border: 3px solid white; font-size: 30px; display: flex; justify-content: center; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .ctrl-btn:active { background: rgba(255, 255, 255, 0.5); }
-
-        /* MODAL */
-        #memory-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.6); text-align: center; width: 85%; max-width: 400px; z-index: 100; }
-        #image-container { overflow: hidden; border-radius: 10px; margin-bottom: 10px; background: #eee; min-height: 200px; display: flex; align-items: center; justify-content: center; }
-        #modal-img { width: 100%; transition: transform 0.4s ease; cursor: pointer; display: block; }
-        #memory-modal button { margin-top: 10px; padding: 12px 25px; background: #4a7c44; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #ui { position: absolute; top: 10px; width: 100%; text-align: center; color: white; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px black; }
+        #controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 20; }
+        .row { display: flex; gap: 40px; }
+        .btn { width: 65px; height: 65px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid white; color: white; font-size: 25px; display: flex; justify-content: center; align-items: center; user-select: none; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px; border-radius: 15px; text-align: center; width: 80%; max-width: 350px; z-index: 100; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #modal img { width: 100%; border-radius: 10px; }
+        #modal button { margin-top: 10px; padding: 10px 20px; background: #4a7c44; color: white; border: none; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="ui-top">
-        <h1>HAPPY BIRTHDAY DAD!</h1>
-        <div id="counter">Photos Found: 0 / 28</div>
+    <div id="ui">
+        <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
+        <p id="instruction">Go inside the house to find your memories!</p>
     </div>
-
-    <button id="reset-pos" onclick="resetToCenter()">I'M LOST (Reset Position)</button>
 
     <div id="controls">
-        <div class="ctrl-btn" id="up">▲</div>
-        <div class="side-btns">
-            <div class="ctrl-btn" id="left">◀</div>
-            <div class="ctrl-btn" id="right">▶</div>
+        <div class="btn" id="up">▲</div>
+        <div class="row">
+            <div class="btn" id="left">◀</div>
+            <div class="btn" id="right">▶</div>
         </div>
-        <div class="ctrl-btn" id="down">▼</div>
+        <div class="btn" id="down">▼</div>
     </div>
 
-    <div id="memory-modal">
-        <h2 id="modal-title"></h2>
-        <div id="image-container">
-            <img id="modal-img" src="" alt="Memory">
-        </div>
-        <p id="modal-text"></p>
-        <button onclick="closeModal()">Back to the Map</button>
+    <div id="modal">
+        <h2 id="m-title"></h2>
+        <img id="m-img" src="">
+        <p id="m-text">What a memory!</p>
+        <button onclick="closeM()">Back to Search</button>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="g"></canvas>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('g');
         const ctx = canvas.getContext('2d');
-        const modal = document.getElementById('memory-modal');
-        const modalImg = document.getElementById('modal-img');
-        const counterDisplay = document.getElementById('counter');
+        const modal = document.getElementById('modal');
+        const mImg = document.getElementById('m-img');
 
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+        let w = window.innerWidth, h = window.innerHeight;
+        canvas.width = w; canvas.height = h;
 
-        // STARTING AT 0,0
-        let worldX = 0;
-        let worldY = 0;
-        let speed = 12;
-        let isPaused = false;
-        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        // Game States: 'overworld' or 'indoor'
+        let state = 'overworld';
+        let x = 0, y = 0, paused = false;
+        const keys = { u: false, d: false, l: false, r: false };
 
-        function resetToCenter() {
-            worldX = 0;
-            worldY = 0;
-        }
+        // The Overworld House
+        const mainHouse = { x: 0, y: -300, size: 150 };
 
-        // 28 Houses
-        const houses = [];
-        for (let i = 1; i <= 28; i++) {
-            houses.push({
-                x: Math.cos(i) * 1800 + (Math.random() * 400),
-                y: Math.sin(i) * 1800 + (Math.random() * 400),
-                color: `hsl(${i * 15}, 70%, 45%)`,
-                label: "Ugly Photo " + i,
-                imgBase: "ugly photo" + i,
-                visited: false,
-                id: i
+        // Indoor Photos
+        const photos = [];
+        for(let i=1; i<=28; i++) {
+            photos.push({
+                idx: i,
+                px: (Math.random() - 0.5) * 1500,
+                py: (Math.random() - 0.5) * 1500,
+                v: false
             });
         }
 
-        function loadImage(base) {
-            const exts = ['.jpg', '.JPG', '.jpeg', '.png'];
-            let attempt = 0;
-            modalImg.onerror = () => {
-                attempt++;
-                if(attempt < exts.length) modalImg.src = encodeURI(base + exts[attempt]);
-                else modalImg.src = 'https://via.placeholder.com/300?text=File+Not+Found';
-            };
-            modalImg.src = encodeURI(base + exts[0]);
-        }
+        function closeM() { modal.style.display = 'none'; paused = false; }
 
-        const stopAll = () => { keys.ArrowUp = false; keys.ArrowDown = false; keys.ArrowLeft = false; keys.ArrowRight = false; };
-        window.onmouseup = stopAll; window.ontouchend = stopAll;
-
-        const bindBtn = (id, k) => {
-            const b = document.getElementById(id);
-            b.ontouchstart = (e) => { e.preventDefault(); if(!isPaused) keys[k] = true; };
-            b.onmousedown = () => { if(!isPaused) keys[k] = true; };
+        const bind = (id, k) => {
+            const el = document.getElementById(id);
+            el.ontouchstart = (e) => { e.preventDefault(); keys[k] = true; };
+            el.onmousedown = () => { keys[k] = true; };
         };
-        bindBtn('up','ArrowUp'); bindBtn('down','ArrowDown'); bindBtn('left','ArrowLeft'); bindBtn('right','ArrowRight');
-
-        function closeModal() {
-            modal.style.display = 'none';
-            isPaused = false;
-            counterDisplay.innerText = "Photos Found: " + houses.filter(h => h.visited).length + " / 28";
-        }
+        bind('up','u'); bind('down','d'); bind('left','l'); bind('right','r');
+        window.onmouseup = window.ontouchend = () => { keys.u = keys.d = keys.l = keys.r = false; };
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Background color changes based on location
+            ctx.fillStyle = state === 'overworld' ? "#4a7c44" : "#f3e5ab"; // Green grass vs Wood floor
+            ctx.fillRect(0, 0, w, h);
 
-            if (!isPaused) {
-                if (keys.ArrowUp) worldY += speed;
-                if (keys.ArrowDown) worldY -= speed;
-                if (keys.ArrowLeft) worldX += speed;
-                if (keys.ArrowRight) worldX -= speed;
+            if(!paused) {
+                if(keys.u) y += 12; if(keys.d) y -= 12;
+                if(keys.l) x += 12; if(keys.r) x -= 12;
             }
 
-            // Draw Houses
-            houses.forEach(h => {
-                const dx = canvas.width/2 + h.x + worldX;
-                const dy = canvas.height/2 + h.y + worldY;
+            if (state === 'overworld') {
+                // DRAW THE MAIN HOUSE
+                const hx = w/2 + mainHouse.x + x;
+                const hy = h/2 + mainHouse.y + y;
+                
+                ctx.fillStyle = "#8b4513";
+                ctx.fillRect(hx, hy, mainHouse.size, mainHouse.size);
+                ctx.fillStyle = "#333"; // Roof
+                ctx.beginPath();
+                ctx.moveTo(hx-20, hy); ctx.lineTo(hx+75, hy-80); ctx.lineTo(hx+170, hy); ctx.fill();
+                ctx.fillStyle = "yellow"; // Door
+                ctx.fillRect(hx+60, hy+90, 30, 60);
 
-                // Simple render if nearby
-                ctx.fillStyle = h.visited ? "#333" : h.color;
-                ctx.fillRect(dx, dy, 50, 50);
-                ctx.fillStyle = "white";
-                ctx.font = "12px Arial";
-                ctx.fillText(h.id, dx+20, dy+30);
-
-                if (Math.hypot(canvas.width/2 - (dx+25), canvas.height/2 - (dy+25)) < 40 && !h.visited) {
-                    isPaused = true; h.visited = true; stopAll();
-                    document.getElementById('modal-title').innerText = h.label;
-                    loadImage(h.imgBase);
-                    modal.style.display = 'block';
+                // Check Entrance
+                if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 80) {
+                    state = 'indoor';
+                    x = 0; y = 0; // Reset position inside
+                    document.getElementById('instruction').innerText = "Found: 0 / 28 Photos";
+                    document.getElementById('main-title').innerText = "INSIDE THE HOUSE";
                 }
-            });
+            } else {
+                // DRAW THE INDOOR MEMORIES
+                photos.forEach(p => {
+                    const sx = w/2 + p.px + x;
+                    const sy = h/2 + p.py + y;
 
-            // Draw Character (Always in center of screen)
+                    ctx.fillStyle = p.v ? "#ccc" : "#ff006e";
+                    ctx.fillRect(sx, sy, 40, 40);
+                    ctx.fillStyle = "white";
+                    ctx.font = "12px Arial";
+                    ctx.fillText(p.idx, sx + 15, sy + 25);
+
+                    const dist = Math.hypot(w/2 - (sx+20), h/2 - (sy+20));
+                    if(dist < 35 && !p.v) {
+                        p.v = true; paused = true;
+                        document.getElementById('m-title').innerText = "Memory #" + p.idx;
+                        mImg.src = encodeURI("ugly photo" + p.idx + ".jpg");
+                        modal.style.display = 'block';
+                        const count = photos.filter(item => item.v).length;
+                        document.getElementById('instruction').innerText = "Found: " + count + " / 28 Photos";
+                    }
+                });
+            }
+
+            // DRAW DAD
             ctx.fillStyle = "#FFD700";
             ctx.beginPath();
-            ctx.arc(canvas.width/2, canvas.height/2, 22, 0, Math.PI*2);
+            ctx.arc(w/2, h/2, 22, 0, Math.PI*2);
             ctx.fill();
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.fillStyle = "black";
-            ctx.textAlign = "center";
-            ctx.font = "bold 12px Arial";
-            ctx.fillText("DAD", canvas.width/2, canvas.height/2 + 5);
+            ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.fillStyle = "black"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
+            ctx.fillText("DAD", w/2, h/2 + 5);
 
             requestAnimationFrame(draw);
         }
