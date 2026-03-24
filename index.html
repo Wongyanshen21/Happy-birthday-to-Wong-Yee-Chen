@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dad's 28-Photo Birthday Quest</title>
+    <title>Dad's 28-Photo Quest</title>
     <style>
         body { margin: 0; overflow: hidden; background: #4a7c44; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         canvas { display: block; }
+        
+        /* UI ELEMENTS */
         #ui-top { position: absolute; top: 10px; width: 100%; text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); pointer-events: none; z-index: 10; }
+        #counter { position: absolute; top: 60px; width: 100%; text-align: center; color: #FFD700; font-weight: bold; z-index: 10; font-size: 18px; }
+        
+        /* RESET BUTTON if lost */
+        #reset-pos { position: absolute; top: 100px; left: 10px; padding: 10px; background: rgba(0,0,0,0.5); color: white; border: 1px solid white; border-radius: 5px; font-size: 12px; cursor: pointer; z-index: 30; }
+
+        /* CONTROLS */
         #controls { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 20; }
         .side-btns { display: flex; gap: 50px; }
         .ctrl-btn { width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); color: white; border: 3px solid white; font-size: 30px; display: flex; justify-content: center; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
         .ctrl-btn:active { background: rgba(255, 255, 255, 0.5); }
+
+        /* MODAL */
         #memory-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.6); text-align: center; width: 85%; max-width: 400px; z-index: 100; }
-        #image-container { overflow: hidden; border-radius: 10px; margin-bottom: 10px; background: #eee; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative; }
+        #image-container { overflow: hidden; border-radius: 10px; margin-bottom: 10px; background: #eee; min-height: 200px; display: flex; align-items: center; justify-content: center; }
         #modal-img { width: 100%; transition: transform 0.4s ease; cursor: pointer; display: block; }
-        #memory-modal h2 { margin: 10px 0; color: #333; font-size: 1.2rem; }
         #memory-modal button { margin-top: 10px; padding: 12px 25px; background: #4a7c44; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #counter { position: absolute; top: 60px; width: 100%; text-align: center; color: #FFD700; font-weight: bold; z-index: 10; font-size: 18px; }
-        #loading-text { position: absolute; color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -27,6 +34,8 @@
         <h1>HAPPY BIRTHDAY DAD!</h1>
         <div id="counter">Photos Found: 0 / 28</div>
     </div>
+
+    <button id="reset-pos" onclick="resetToCenter()">I'M LOST (Reset Position)</button>
 
     <div id="controls">
         <div class="ctrl-btn" id="up">▲</div>
@@ -40,8 +49,7 @@
     <div id="memory-modal">
         <h2 id="modal-title"></h2>
         <div id="image-container">
-            <div id="loading-text">Loading...</div>
-            <img id="modal-img" src="" alt="Birthday Memory">
+            <img id="modal-img" src="" alt="Memory">
         </div>
         <p id="modal-text"></p>
         <button onclick="closeModal()">Back to the Map</button>
@@ -63,75 +71,62 @@
         window.addEventListener('resize', resize);
         resize();
 
-        let worldX = 0, worldY = 0, speed = 10, isPaused = false;
+        // STARTING AT 0,0
+        let worldX = 0;
+        let worldY = 0;
+        let speed = 12;
+        let isPaused = false;
         const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-        // GENERATE 28 HOUSES
+        function resetToCenter() {
+            worldX = 0;
+            worldY = 0;
+        }
+
+        // 28 Houses
         const houses = [];
-        const colors = ['#8b4513', '#4682b4', '#e63946', '#2a9d8f', '#f4a261', '#9b5de5', '#ff006e'];
-        
         for (let i = 1; i <= 28; i++) {
             houses.push({
-                x: (Math.random() - 0.5) * 4000, 
-                y: (Math.random() - 0.5) * 4000,
-                color: colors[i % colors.length],
+                x: Math.cos(i) * 1800 + (Math.random() * 400),
+                y: Math.sin(i) * 1800 + (Math.random() * 400),
+                color: `hsl(${i * 15}, 70%, 45%)`,
                 label: "Ugly Photo " + i,
-                memory: i === 28 ? "THE GRAND FINALE! Click to zoom!" : "Found photo #" + i + "!",
-                baseName: "ugly photo" + i,
+                imgBase: "ugly photo" + i,
                 visited: false,
                 id: i
             });
         }
 
-        // SMART IMAGE LOADER (Checks .jpg then .JPG then .jpeg)
-        function tryLoadImage(baseName) {
-            const extensions = ['.jpg', '.JPG', '.jpeg', '.png'];
-            let currentExt = 0;
-            
-            modalImg.onerror = function() {
-                currentExt++;
-                if (currentExt < extensions.length) {
-                    this.src = encodeURI(baseName + extensions[currentExt]);
-                } else {
-                    this.onerror = null;
-                    this.src = 'https://via.placeholder.com/300?text=Image+Not+Found';
-                }
+        function loadImage(base) {
+            const exts = ['.jpg', '.JPG', '.jpeg', '.png'];
+            let attempt = 0;
+            modalImg.onerror = () => {
+                attempt++;
+                if(attempt < exts.length) modalImg.src = encodeURI(base + exts[attempt]);
+                else modalImg.src = 'https://via.placeholder.com/300?text=File+Not+Found';
             };
-            
-            modalImg.src = encodeURI(baseName + extensions[currentExt]);
+            modalImg.src = encodeURI(base + exts[0]);
         }
 
-        modalImg.addEventListener('click', () => {
-            const currentTitle = document.getElementById('modal-title').innerText;
-            if (currentTitle === "Ugly Photo 7") {
-                tryLoadImage("ugly photo7 2");
-                modalImg.style.transform = "scale(2.5)";
-            } else if (currentTitle === "Ugly Photo 28") {
-                modalImg.style.transform = "scale(2.5)";
-            }
-        });
+        const stopAll = () => { keys.ArrowUp = false; keys.ArrowDown = false; keys.ArrowLeft = false; keys.ArrowRight = false; };
+        window.onmouseup = stopAll; window.ontouchend = stopAll;
 
-        const stopAllMovement = () => { keys.ArrowUp = false; keys.ArrowDown = false; keys.ArrowLeft = false; keys.ArrowRight = false; };
-        window.addEventListener('mouseup', stopAllMovement);
-        window.addEventListener('touchend', stopAllMovement);
-
-        const setupBtn = (id, keyName) => {
-            const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); if(!isPaused) keys[keyName] = true; });
-            btn.addEventListener('mousedown', (e) => { e.preventDefault(); if(!isPaused) keys[keyName] = true; });
+        const bindBtn = (id, k) => {
+            const b = document.getElementById(id);
+            b.ontouchstart = (e) => { e.preventDefault(); if(!isPaused) keys[k] = true; };
+            b.onmousedown = () => { if(!isPaused) keys[k] = true; };
         };
-        setupBtn('up', 'ArrowUp'); setupBtn('down', 'ArrowDown'); setupBtn('left', 'ArrowLeft'); setupBtn('right', 'ArrowRight');
+        bindBtn('up','ArrowUp'); bindBtn('down','ArrowDown'); bindBtn('left','ArrowLeft'); bindBtn('right','ArrowRight');
 
         function closeModal() {
             modal.style.display = 'none';
-            modalImg.style.transform = "scale(1)";
             isPaused = false;
-            const foundCount = houses.filter(h => h.visited).length;
-            counterDisplay.innerText = "Photos Found: " + foundCount + " / 28";
+            counterDisplay.innerText = "Photos Found: " + houses.filter(h => h.visited).length + " / 28";
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             if (!isPaused) {
                 if (keys.ArrowUp) worldY += speed;
                 if (keys.ArrowDown) worldY -= speed;
@@ -139,45 +134,42 @@
                 if (keys.ArrowRight) worldX -= speed;
             }
 
-            houses.forEach(house => {
-                const drawX = canvas.width / 2 + house.x + worldX;
-                const drawY = canvas.height / 2 + house.y + worldY;
+            // Draw Houses
+            houses.forEach(h => {
+                const dx = canvas.width/2 + h.x + worldX;
+                const dy = canvas.height/2 + h.y + worldY;
 
-                if (drawX > -100 && drawX < canvas.width + 100 && drawY > -100 && drawY < canvas.height + 100) {
-                    ctx.fillStyle = house.visited ? "#555" : house.color;
-                    ctx.fillRect(drawX, drawY, 60, 60);
-                    ctx.fillStyle = "#333";
-                    ctx.beginPath();
-                    ctx.moveTo(drawX - 5, drawY); ctx.lineTo(drawX + 30, drawY - 30); ctx.lineTo(drawX + 65, drawY);
-                    ctx.fill();
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 12px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText(house.id, drawX + 30, drawY + 35);
-                }
+                // Simple render if nearby
+                ctx.fillStyle = h.visited ? "#333" : h.color;
+                ctx.fillRect(dx, dy, 50, 50);
+                ctx.fillStyle = "white";
+                ctx.font = "12px Arial";
+                ctx.fillText(h.id, dx+20, dy+30);
 
-                const dist = Math.sqrt(Math.pow(canvas.width/2 - (drawX+30), 2) + Math.pow(canvas.height/2 - (drawY+30), 2));
-                if (dist < 40 && !house.visited) {
-                    isPaused = true;
-                    house.visited = true;
-                    stopAllMovement();
-                    document.getElementById('modal-title').innerText = house.label;
-                    document.getElementById('modal-text').innerText = house.memory;
-                    tryLoadImage(house.baseName);
+                if (Math.hypot(canvas.width/2 - (dx+25), canvas.height/2 - (dy+25)) < 40 && !h.visited) {
+                    isPaused = true; h.visited = true; stopAll();
+                    document.getElementById('modal-title').innerText = h.label;
+                    loadImage(h.imgBase);
                     modal.style.display = 'block';
                 }
             });
 
+            // Draw Character (Always in center of screen)
             ctx.fillStyle = "#FFD700";
             ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 20, 0, Math.PI * 2);
+            ctx.arc(canvas.width/2, canvas.height/2, 22, 0, Math.PI*2);
             ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 3;
+            ctx.stroke();
             ctx.fillStyle = "black";
-            ctx.font = "bold 10px Arial";
             ctx.textAlign = "center";
-            ctx.fillText("DAD", canvas.width / 2, canvas.height / 2 + 4);
+            ctx.font = "bold 12px Arial";
+            ctx.fillText("DAD", canvas.width/2, canvas.height/2 + 5);
 
             requestAnimationFrame(draw);
         }
         draw();
-    </
+    </script>
+</body>
+</html>
