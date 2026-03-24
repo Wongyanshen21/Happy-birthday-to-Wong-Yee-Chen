@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dad's Birthday Quest</title>
+    <title>Dad's 28-Photo Birthday Quest</title>
     <style>
         body { margin: 0; overflow: hidden; background: #4a7c44; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         canvas { display: block; }
@@ -15,15 +15,16 @@
         #memory-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.6); text-align: center; width: 85%; max-width: 400px; z-index: 100; }
         #image-container { overflow: hidden; border-radius: 10px; margin-bottom: 10px; background: #eee; min-height: 200px; display: flex; align-items: center; justify-content: center; }
         #modal-img { width: 100%; transition: transform 0.4s ease; cursor: pointer; display: block; }
-        #memory-modal h2 { margin: 10px 0; color: #333; }
+        #memory-modal h2 { margin: 10px 0; color: #333; font-size: 1.2rem; }
         #memory-modal button { margin-top: 10px; padding: 12px 25px; background: #4a7c44; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #counter { position: absolute; top: 60px; width: 100%; text-align: center; color: #FFD700; font-weight: bold; z-index: 10; }
     </style>
 </head>
 <body>
 
     <div id="ui-top">
         <h1>HAPPY BIRTHDAY DAD!</h1>
-        <p>Explore the map to find all 7 "Ugly Photos"!</p>
+        <div id="counter">Photos Found: 0 / 28</div>
     </div>
 
     <div id="controls">
@@ -51,6 +52,7 @@
         const ctx = canvas.getContext('2d');
         const modal = document.getElementById('memory-modal');
         const modalImg = document.getElementById('modal-img');
+        const counterDisplay = document.getElementById('counter');
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -59,29 +61,33 @@
         window.addEventListener('resize', resize);
         resize();
 
-        let worldX = 0, worldY = 0, speed = 8, isPaused = false;
+        let worldX = 0, worldY = 0, speed = 9, isPaused = false;
         const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-        const houses = [
-            { x: 400, y: 100, color: '#8b4513', label: "Ugly Photo 1", memory: "A masterpiece!", img: "ugly photo1.jpg", visited: false },
-            { x: -500, y: 300, color: '#4682b4', label: "Ugly Photo 2", memory: "Looking good!", img: "ugly photo2.jpg", visited: false },
-            { x: 100, y: -400, color: '#e63946', label: "Ugly Photo 3", memory: "Classic!", img: "ugly photo3.jpg", visited: false },
-            { x: -200, y: -700, color: '#2a9d8f', label: "Ugly Photo 4", memory: "Legendary.", img: "ugly photo4.jpg", visited: false },
-            { x: 600, y: -200, color: '#f4a261', label: "Ugly Photo 5", memory: "Stunning!", img: "ugly photo5.jpg", visited: false },
-            { x: -600, y: -300, color: '#9b5de5', label: "Ugly Photo 6", memory: "Almost there!", img: "ugly photo6.jpg", visited: false },
-            { 
-                x: 0, y: 700, color: '#ff006e', label: "Ugly Photo 7", 
-                memory: "FINALE! Click to zoom in!", 
-                img: "ugly photo7.jpg", 
-                zoomImg: "ugly photo7 2.jpg", 
-                visited: false 
-            }
-        ];
+        // GENERATE 28 HOUSES
+        const houses = [];
+        const colors = ['#8b4513', '#4682b4', '#e63946', '#2a9d8f', '#f4a261', '#9b5de5', '#ff006e'];
+        
+        for (let i = 1; i <= 28; i++) {
+            houses.push({
+                x: (Math.random() - 0.5) * 3000, // Wide scatter
+                y: (Math.random() - 0.5) * 3000,
+                color: colors[i % colors.length],
+                label: "Ugly Photo " + i,
+                memory: i === 28 ? "THE GRAND FINALE! Click to zoom!" : "Found photo #" + i + "!",
+                img: "ugly photo" + i + ".jpg",
+                visited: false,
+                id: i
+            });
+        }
 
+        // SPECIAL ZOOM LOGIC
         modalImg.addEventListener('click', () => {
-            const currentHouse = houses.find(h => h.label === document.getElementById('modal-title').innerText);
-            if (currentHouse && currentHouse.label === "Ugly Photo 7") {
-                modalImg.src = encodeURI(currentHouse.zoomImg);
+            const currentTitle = document.getElementById('modal-title').innerText;
+            if (currentTitle === "Ugly Photo 7") {
+                modalImg.src = encodeURI("ugly photo7 2.jpg");
+                modalImg.style.transform = "scale(2.5)";
+            } else if (currentTitle === "Ugly Photo 28") {
                 modalImg.style.transform = "scale(2.5)";
             }
         });
@@ -101,52 +107,8 @@
             modal.style.display = 'none';
             modalImg.style.transform = "scale(1)";
             isPaused = false;
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (!isPaused) {
-                if (keys.ArrowUp) worldY += speed;
-                if (keys.ArrowDown) worldY -= speed;
-                if (keys.ArrowLeft) worldX += speed;
-                if (keys.ArrowRight) worldX -= speed;
-            }
-
-            houses.forEach(house => {
-                const drawX = canvas.width / 2 + house.x + worldX;
-                const drawY = canvas.height / 2 + house.y + worldY;
-
-                ctx.fillStyle = house.color;
-                ctx.fillRect(drawX, drawY, 80, 80);
-                ctx.fillStyle = "#333";
-                ctx.beginPath();
-                ctx.moveTo(drawX - 10, drawY); ctx.lineTo(drawX + 40, drawY - 40); ctx.lineTo(drawX + 90, drawY);
-                ctx.fill();
-
-                const dist = Math.sqrt(Math.pow(canvas.width/2 - (drawX+40), 2) + Math.pow(canvas.height/2 - (drawY+40), 2));
-                if (dist < 60 && !house.visited) {
-                    isPaused = true;
-                    house.visited = true;
-                    stopAllMovement();
-                    document.getElementById('modal-title').innerText = house.label;
-                    document.getElementById('modal-text').innerText = house.memory;
-                    modalImg.src = encodeURI(house.img);
-                    modal.style.display = 'block';
-                }
-            });
-
-            ctx.fillStyle = "#FFD700";
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 25, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "black";
-            ctx.font = "bold 12px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("DAD", canvas.width / 2, canvas.height / 2 + 5);
-
-            requestAnimationFrame(draw);
-        }
-        draw();
-    </script>
-</body>
-</html>
+            
+            const foundCount = houses.filter(h => h.visited).length;
+            counterDisplay.innerText = "Photos Found: " + foundCount + " / 28";
+            
+            if(foundCount ===
