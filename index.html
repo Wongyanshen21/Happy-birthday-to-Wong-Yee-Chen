@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: v1.8</div>
+    <div id="version-tag">Build: v2.1</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -60,6 +60,10 @@
         const mVid = document.getElementById('m-video');
         const mText = document.getElementById('m-text');
 
+        // --- CHARACTER IMAGE SETUP ---
+        const charImg = new Image();
+        charImg.src = "your-character.png"; // <-- CHANGE THIS to your filename (e.g., "me.jpg")
+
         let w = window.innerWidth, h = window.innerHeight;
         canvas.width = w; canvas.height = h;
 
@@ -69,32 +73,32 @@
         const keys = { u: false, d: false, l: false, r: false };
 
         const photoMessages = [
-            "You and Olivia have the same amount of laziness", // 1 (Video)
-            "Dream come true!!", "TUMIIII", "quack quack you look like it", 
-            "Congrats on winnning the prize of doing nothing!!", 
-            "Atleast a single picture of you and a celebrity :P", 
+            "You and Olivia have the same amount of laziness", 
+            "Dream come true!!", "TUMIIII", "quack quack you look like it",  
+            "Congrats on winnning the prize of doing nothing!!",  
+            "Atleast a single picture of you and a celebrity :P",  
+            "What are you looking at",  
+            "Princess Paul (Click for her true form!)", 
+            "Truly a princess", 
+            "China would be proud of that eyesight", 
             "What are you looking at", 
-            "Princess Paul (Click for her true form!)", // 8
-            "Truly a princess", // 8_2 (Internal)
-            "China would be proud of that eyesight", // 10
-            "What are you looking at", // 11
-            "relaxing", // 12
-            "Bulging eyes", // 13
-            "Bulging eyes", // 14
-            "Still bulging eyes", // 15
-            "wo dui ni ai ai ai bu wan", // 16
-            "tasty food happy dad", // 17
-            "very proud pose!", // 18
-            "before eating pose", // 19
-            "Happy birthday!", // 20
-            "Blooming flower", // 21
-            "SEB team", // 22
-            "what a cute couple (you and mother)", // 23
-            "got the anti-stupid medication but didnt work", // 24
-            "Cool looking dinosaur!", // 25
-            "The two dads", // 26
-            "Heheh tooth fairy", // Extra placeholder if needed
-            "Santa's elf!" // 28
+            "relaxing", 
+            "Bulging eyes", 
+            "Bulging eyes", 
+            "Still bulging eyes", 
+            "wo dui ni ai ai ai bu wan", 
+            "tasty food happy dad", 
+            "very proud pose!", 
+            "before eating pose", 
+            "Happy birthday!", 
+            "Blooming flower", 
+            "SEB team", 
+            "what a cute couple (you and mother)", 
+            "got the anti-stupid medication but didnt work", 
+            "Cool looking dinosaur!", 
+            "The two dads", 
+            "Heheh tooth fairy", 
+            "Santa's elf!" 
         ];
 
         const houses = [];
@@ -126,6 +130,26 @@
         };
         bind('up','u'); bind('down','d'); bind('left','l'); bind('right','r');
         window.onmouseup = window.ontouchend = () => { keys.u = keys.d = keys.l = keys.r = false; };
+
+        // --- NEW CHARACTER DRAWING FUNCTION ---
+        function drawPlayer(cx, cy) {
+            const size = 50; 
+            if (charImg.complete && charImg.naturalWidth !== 0) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, size/2, 0, Math.PI * 2);
+                ctx.clip(); 
+                ctx.drawImage(charImg, cx - size/2, cy - size/2, size, size);
+                ctx.restore();
+                ctx.strokeStyle = "gold";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            } else {
+                // Fallback circle if image fails to load
+                ctx.fillStyle = "#FFD700"; ctx.beginPath(); ctx.arc(cx, cy, 22, 0, 7); ctx.fill();
+                ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
+            }
+        }
 
         function draw() {
             ctx.fillStyle = state === 'overworld' ? "#4a7c44" : "#2c3e50";
@@ -160,10 +184,7 @@
                             mText.innerText = photoMessages[0];
                         } else {
                             mVid.style.display = "none"; mImg.style.display = "block";
-                            
-                            // HOUSE TO FILE LOGIC
                             let fileNum = (hItem.id <= 8) ? hItem.id : hItem.id + 1;
-                            // HOUSE TO MESSAGE LOGIC
                             let msgIdx = (hItem.id <= 8) ? hItem.id - 1 : hItem.id;
                             
                             mImg.src = "ugly photo" + fileNum + ".jpg";
@@ -174,8 +195,10 @@
                     }
                 });
             }
-            ctx.fillStyle = "#FFD700"; ctx.beginPath(); ctx.arc(w/2, h/2, 22, 0, 7); ctx.fill();
-            ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
+            
+            // Draw character in the middle
+            drawPlayer(w/2, h/2);
+            
             requestAnimationFrame(draw);
         }
         draw();
