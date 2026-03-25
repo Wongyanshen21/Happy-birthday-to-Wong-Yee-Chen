@@ -7,6 +7,7 @@
     <style>
         body { margin: 0; overflow: hidden; background: #4a7c44; font-family: sans-serif; touch-action: none; }
         canvas { display: block; }
+        #version-tag { position: absolute; top: 5px; right: 10px; color: rgba(255,255,255,0.5); font-size: 10px; z-index: 100; pointer-events: none; }
         #ui { position: absolute; top: 10px; width: 100%; text-align: center; color: white; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px black; }
         #controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 20; }
         .row { display: flex; gap: 40px; }
@@ -18,6 +19,8 @@
     </style>
 </head>
 <body>
+
+    <div id="version-tag">Build: v1.2</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -44,7 +47,7 @@
         <h1 style="font-size: 60px;">🎂✨🎁</h1>
         <h1>MISSION COMPLETE!</h1>
         <h2 style="color: white;">Happy Birthday to the Best Dad!</h2>
-        <p style="color: #ccc; padding: 20px; font-size: 18px;">You found all 28 memories. We love you so much!</p>
+        <p style="color: #ccc; padding: 20px; font-size: 18px;">You found all 28 memories. We love you!</p>
         <button onclick="location.reload()" style="padding: 12px 25px; background: gold; color: black; border: none; border-radius: 8px; font-weight: bold;">Play Again</button>
     </div>
 
@@ -154,8 +157,19 @@
                             mVid.src = "ugly photo1.mp4";
                         } else {
                             mVid.style.display = "none"; mImg.style.display = "block";
-                            // FIX: Only House 9 uses the '8 2' file. Everyone else uses their own number.
-                            mImg.src = (p.idx === 9) ? "ugly photo8 2.jpg" : "ugly photo" + p.idx + ".jpg";
+                            
+                            // CLEAN LOGIC: 
+                            // House 8 = ugly photo8.jpg
+                            // House 9 = ugly photo8 2.jpg
+                            // Everything else = ugly photo + its own number
+                            let finalFile = "";
+                            if (p.idx === 9) {
+                                finalFile = "ugly photo8 2.jpg";
+                            } else {
+                                finalFile = "ugly photo" + p.idx + ".jpg";
+                            }
+                            
+                            mImg.src = encodeURI(finalFile);
                         }
                         modal.style.display = 'block';
                         document.getElementById('instruction').innerText = "Found: " + photos.filter(i=>i.v).length + " / 28";
