@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: v2.1</div>
+    <div id="version-tag">Build: v2.2</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -39,7 +39,7 @@
             <img id="m-img" src="" style="cursor: pointer;">
             <video id="m-video" controls></video>
         </div>
-        <p id="m-text" style="color: #333; font-weight: bold; margin-top: 10px;"></p>
+        <p id="m-text" style="color: #333; font-weight: bold; margin-top: 10px; font-size: 1.2em;"></p>
         <button onclick="closeM()">Back to Search</button>
     </div>
 
@@ -62,7 +62,7 @@
 
         // --- CHARACTER IMAGE SETUP ---
         const charImg = new Image();
-        charImg.src = "your-character.png"; // <-- CHANGE THIS to your filename (e.g., "me.jpg")
+        charImg.src = "character.jpg"; 
 
         let w = window.innerWidth, h = window.innerHeight;
         canvas.width = w; canvas.height = h;
@@ -71,6 +71,27 @@
         let x = 0, y = 0, paused = false;
         let currentHouseId = 0;
         const keys = { u: false, d: false, l: false, r: false };
+
+        const dadJokes = [
+            "I'm afraid for the calendar. Its days are numbered.",
+            "My wife said I should do lunges to stay in shape. That would be a big step forward.",
+            "Why do fathers take an extra pair of socks when they go golfing? In case they get a hole in one!",
+            "Singing in the shower is fun until you get soap in your mouth. Then it's a soap opera.",
+            "I thought the dryer was shrinking my clothes. Turns out it was the refrigerator all along.",
+            "What do you call a factory that makes okay products? A satisfactory.",
+            "Dear Math, grow up and solve your own problems.",
+            "I'm on a seafood diet. I see food and I eat it.",
+            "How do you make a tissue dance? You put a little boogie in it.",
+            "Why did the bullet end up losing his job? He got fired.",
+            "I used to be a baker, but I couldn't make enough dough.",
+            "What did the ocean say to the beach? Nothing, it just waved.",
+            "I tell dad jokes but I have no kids. I'm a faux pa.",
+            "Did you hear about the guy who invented the Lifesaver? They say he made a mint.",
+            "I'm reading a book on anti-gravity. It's impossible to put down!",
+            "What's the best thing about Switzerland? I don't know, but the flag is a big plus.",
+            "I'm so good at sleeping that I can do it with my eyes closed.",
+            "A skeleton walks into a bar and orders a beer and a mop."
+        ];
 
         const photoMessages = [
             "You and Olivia have the same amount of laziness", 
@@ -131,21 +152,15 @@
         bind('up','u'); bind('down','d'); bind('left','l'); bind('right','r');
         window.onmouseup = window.ontouchend = () => { keys.u = keys.d = keys.l = keys.r = false; };
 
-        // --- NEW CHARACTER DRAWING FUNCTION ---
         function drawPlayer(cx, cy) {
             const size = 50; 
             if (charImg.complete && charImg.naturalWidth !== 0) {
                 ctx.save();
-                ctx.beginPath();
-                ctx.arc(cx, cy, size/2, 0, Math.PI * 2);
-                ctx.clip(); 
+                ctx.beginPath(); ctx.arc(cx, cy, size/2, 0, Math.PI * 2); ctx.clip(); 
                 ctx.drawImage(charImg, cx - size/2, cy - size/2, size, size);
                 ctx.restore();
-                ctx.strokeStyle = "gold";
-                ctx.lineWidth = 3;
-                ctx.stroke();
+                ctx.strokeStyle = "gold"; ctx.lineWidth = 3; ctx.stroke();
             } else {
-                // Fallback circle if image fails to load
                 ctx.fillStyle = "#FFD700"; ctx.beginPath(); ctx.arc(cx, cy, 22, 0, 7); ctx.fill();
                 ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
             }
@@ -161,11 +176,26 @@
             }
 
             if (state === 'overworld') {
+                // Main House
                 const hx = w/2 + x, hy = h/2 - 300 + y;
                 ctx.fillStyle = "#8b4513"; ctx.fillRect(hx, hy, 150, 150);
                 ctx.fillStyle = "#333"; ctx.beginPath(); ctx.moveTo(hx-20, hy); ctx.lineTo(hx+75, hy-80); ctx.lineTo(hx+170, hy); ctx.fill();
                 ctx.fillStyle = "yellow"; ctx.fillRect(hx+60, hy+90, 30, 60);
                 if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 80) { state = 'indoor'; x = 0; y = 0; }
+
+                // --- NEW: THE JOKE HUT ---
+                const jx = hx + 300, jy = hy + 50;
+                ctx.fillStyle = "#27ae60"; ctx.fillRect(jx, jy, 100, 100);
+                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.moveTo(jx-10, jy); ctx.lineTo(jx+50, jy-50); ctx.lineTo(jx+110, jy); ctx.fill();
+                ctx.fillStyle = "white"; ctx.font = "bold 16px Arial"; ctx.fillText("JOKES", jx+22, jy+60);
+                
+                if(Math.hypot(w/2 - (jx+50), h/2 - (jy+50)) < 60 && !paused) {
+                    paused = true;
+                    document.getElementById('m-title').innerText = "Dad Joke Dispenser";
+                    mImg.style.display = "none"; mVid.style.display = "none";
+                    mText.innerText = dadJokes[Math.floor(Math.random() * dadJokes.length)];
+                    modal.style.display = 'block';
+                }
             } else {
                 houses.forEach(hItem => {
                     const sx = w/2 + hItem.px + x, sy = h/2 + hItem.py + y;
@@ -177,28 +207,18 @@
                     if(Math.hypot(w/2 - (sx+22), h/2 - (sy+22)) < 40 && !hItem.v) {
                         hItem.v = true; paused = true; currentHouseId = hItem.id;
                         document.getElementById('m-title').innerText = hItem.id === 1 ? "Special Video" : "Memory #" + hItem.id;
-                        
-                        if(hItem.id === 1) {
-                            mImg.style.display = "none"; mVid.style.display = "block";
-                            mVid.src = "ugly photo1.mp4";
-                            mText.innerText = photoMessages[0];
-                        } else {
-                            mVid.style.display = "none"; mImg.style.display = "block";
-                            let fileNum = (hItem.id <= 8) ? hItem.id : hItem.id + 1;
-                            let msgIdx = (hItem.id <= 8) ? hItem.id - 1 : hItem.id;
-                            
-                            mImg.src = "ugly photo" + fileNum + ".jpg";
-                            mText.innerText = photoMessages[msgIdx] || "Happy Birthday Dad!";
-                        }
+                        mVid.style.display = "none"; mImg.style.display = "block";
+                        let fileNum = (hItem.id <= 8) ? hItem.id : hItem.id + 1;
+                        let msgIdx = (hItem.id <= 8) ? hItem.id - 1 : hItem.id;
+                        mImg.src = "ugly photo" + fileNum + ".jpg";
+                        if(hItem.id === 1) { mImg.style.display = "none"; mVid.style.display = "block"; mVid.src = "ugly photo1.mp4"; }
+                        mText.innerText = photoMessages[msgIdx] || "Happy Birthday!";
                         modal.style.display = 'block';
                         document.getElementById('instruction').innerText = "Found: " + houses.filter(h=>h.v).length + " / 27";
                     }
                 });
             }
-            
-            // Draw character in the middle
             drawPlayer(w/2, h/2);
-            
             requestAnimationFrame(draw);
         }
         draw();
