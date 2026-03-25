@@ -9,23 +9,34 @@
         canvas { display: block; }
         #version-tag { position: absolute; top: 5px; right: 10px; color: rgba(255,255,255,0.5); font-size: 10px; z-index: 100; pointer-events: none; }
         #ui { position: absolute; top: 10px; width: 100%; text-align: center; color: white; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px black; }
+        
+        /* NEW EXIT BUTTON STYLE */
+        #exit-btn { 
+            display: none; position: absolute; top: 20px; left: 20px; 
+            padding: 10px 15px; background: #e74c3c; color: white; 
+            border: 2px solid white; border-radius: 8px; font-weight: bold; 
+            z-index: 50; cursor: pointer;
+        }
+
         #controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 20; }
         .row { display: flex; gap: 40px; }
         .btn { width: 65px; height: 65px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid white; color: white; font-size: 25px; display: flex; justify-content: center; align-items: center; user-select: none; }
         #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px; border-radius: 15px; text-align: center; width: 85%; max-width: 350px; z-index: 100; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         #modal img, #modal video { width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
         #modal button { margin-top: 15px; padding: 10px 20px; background: #4a7c44; color: white; border: none; border-radius: 5px; font-weight: bold; }
-        #victory-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1a1a1a, #4a0e0e); z-index: 200; color: gold; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #victory-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1a1a1a, #4a0e0e); z-index: 200; color: gold; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="version-tag">Build: v2.3</div>
+    <div id="version-tag">Build: v2.5</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
         <p id="instruction">Enter the house to start the quest!</p>
     </div>
+
+    <div id="exit-btn" onclick="exitHouse()">EXIT HOUSE</div>
 
     <div id="controls">
         <div class="btn" id="up">▲</div>
@@ -46,8 +57,8 @@
     <div id="victory-screen">
         <h1 style="font-size: 60px;">🎂✨🎁</h1>
         <h1>MISSION COMPLETE!</h1>
-        <h2 style="color: white;">Happy Birthday to the Best Dad!</h2>
-        <button onclick="location.reload()" style="padding: 12px 25px; background: gold; color: black; border: none; border-radius: 8px; font-weight: bold;">Play Again</button>
+        <h2 style="color: white; font-style: italic;">"Happy birthday my fat bouncy dad"</h2>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 12px 25px; background: gold; color: black; border: none; border-radius: 8px; font-weight: bold;">Play Again</button>
     </div>
 
     <canvas id="g"></canvas>
@@ -59,6 +70,7 @@
         const mImg = document.getElementById('m-img');
         const mVid = document.getElementById('m-video');
         const mText = document.getElementById('m-text');
+        const exitBtn = document.getElementById('exit-btn');
 
         const charImg = new Image();
         charImg.src = "character.jpg"; 
@@ -69,7 +81,6 @@
         let state = 'overworld';
         let x = 0, y = 0, paused = false;
         let currentHouseId = 0;
-        let isJokeHut = false;
         const keys = { u: false, d: false, l: false, r: false };
 
         const dadJokes = [
@@ -108,15 +119,19 @@
             if(currentHouseId === 8) { mImg.src = "ugly photo8 2.jpg"; mText.innerText = photoMessages[8]; }
         };
 
+        function exitHouse() {
+            state = 'overworld';
+            x = 0; y = -450; // Place dad right in front of the door
+            exitBtn.style.display = "none";
+        }
+
         function closeM() { 
             modal.style.display = 'none'; 
             mVid.pause(); 
             paused = false; 
             
-            // FIX: Nudge player away so they don't re-trigger the entrance immediately
-            if (state === 'overworld') {
-                y -= 100; // Move character down away from the buildings
-            }
+            // If we are in overworld (joke hut/main house logic), nudge down
+            if (state === 'overworld') { y -= 120; }
             
             if(houses.every(h => h.v)) document.getElementById('victory-screen').style.display = 'flex';
         }
@@ -153,26 +168,22 @@
             }
 
             if (state === 'overworld') {
-                // Main House
                 const hx = w/2 + x, hy = h/2 - 300 + y;
                 ctx.fillStyle = "#8b4513"; ctx.fillRect(hx, hy, 150, 150);
                 ctx.fillStyle = "#333"; ctx.beginPath(); ctx.moveTo(hx-20, hy); ctx.lineTo(hx+75, hy-80); ctx.lineTo(hx+170, hy); ctx.fill();
                 ctx.fillStyle = "yellow"; ctx.fillRect(hx+60, hy+90, 30, 60);
                 
-                // Entrance logic for main house
                 if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 70 && !paused) { 
                     state = 'indoor'; x = 0; y = 0; 
+                    exitBtn.style.display = "block"; // SHOW EXIT BUTTON
                 }
 
-                // Joke Hut
                 const jx = hx + 300, jy = hy + 50;
                 ctx.fillStyle = "#27ae60"; ctx.fillRect(jx, jy, 100, 100);
                 ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.moveTo(jx-10, jy); ctx.lineTo(jx+50, jy-50); ctx.lineTo(jx+110, jy); ctx.fill();
                 ctx.fillStyle = "white"; ctx.font = "bold 16px Arial"; ctx.fillText("JOKES", jx+22, jy+60);
-                
                 if(Math.hypot(w/2 - (jx+50), h/2 - (jy+50)) < 60 && !paused) {
                     paused = true;
-                    isJokeHut = true;
                     document.getElementById('m-title').innerText = "Dad Joke Dispenser";
                     mImg.style.display = "none"; mVid.style.display = "none";
                     mText.innerText = dadJokes[Math.floor(Math.random() * dadJokes.length)];
