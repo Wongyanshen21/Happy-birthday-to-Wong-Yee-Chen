@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: v1.2</div>
+    <div id="version-tag">Build: v1.4</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -47,7 +47,7 @@
         <h1 style="font-size: 60px;">🎂✨🎁</h1>
         <h1>MISSION COMPLETE!</h1>
         <h2 style="color: white;">Happy Birthday to the Best Dad!</h2>
-        <p style="color: #ccc; padding: 20px; font-size: 18px;">You found all 28 memories. We love you!</p>
+        <p style="color: #ccc; padding: 20px; font-size: 18px;">You found all memories. We love you!</p>
         <button onclick="location.reload()" style="padding: 12px 25px; background: gold; color: black; border: none; border-radius: 8px; font-weight: bold;">Play Again</button>
     </div>
 
@@ -66,55 +66,46 @@
 
         let state = 'overworld';
         let x = 0, y = 0, paused = false;
-        let currentPhotoIdx = 0;
+        let currentHouseIdx = 0;
         const keys = { u: false, d: false, l: false, r: false };
 
-        const photoData = [
-            { msg: "You and Olivia have the same amount of laziness" }, // 1
-            { msg: "Dream come true!!" },                               // 2
-            { msg: "TUMIIII" },                                         // 3
-            { msg: "quack quack you look like it" },                    // 4
-            { msg: "Congrats on winnning the prize of doing nothing!!" },// 5
-            { msg: "Atleast a single picture of you and a celebrity :P" },// 6
-            { msg: "What are you looking at" },                         // 7
-            { msg: "Princess Paul (Click for her true form!)" },        // 8
-            { msg: "Truly a princess" },                                // 9
-            { msg: "China would be proud of that eyesight" },           // 10
-            { msg: "What are you looking at" },                         // 11
-            { msg: "relaxing" },                                        // 12
-            { msg: "Bulging eyes" },                                    // 13
-            { msg: "Bulging eyes" },                                    // 14
-            { msg: "Bulging eyes" },                                    // 15
-            { msg: "Still bulging eyes" },                              // 16
-            { msg: "wo dui ni ai ai ai bu wan" },                       // 17
-            { msg: "tasty food happy dad" },                            // 18
-            { msg: "very proud pose!" },                                // 19
-            { msg: "before eating pose" },                              // 20
-            { msg: "Happy birthday!" },                                 // 21
-            { msg: "Blooming flower" },                                 // 22
-            { msg: "SEB team" },                                        // 23
-            { msg: "what a cute couple (you and mother)" },             // 24
-            { msg: "got the anti-stupid medication but didnt work" },   // 25
-            { msg: "Cool looking dinosaur!" },                          // 26
-            { msg: "The two dads" },                                    // 27
-            { msg: "Heheh tooth fairy... THE END!" }                    // 28
+        // 28 messages total (8 and 8_2 are combined in House 8)
+        const photoMessages = [
+            "You and Olivia have the same amount of laziness", // 1 (Video)
+            "Dream come true!!", "TUMIIII", "quack quack you look like it", 
+            "Congrats on winnning the prize of doing nothing!!", "Atleast a single picture of you and a celebrity :P", 
+            "What are you looking at", 
+            "Princess Paul (Click for her true form!)", // 8 (Combined)
+            "Truly a princess", // This message will appear AFTER clicking the zoom on house 8 or we can skip it.
+            "China would be proud of that eyesight", "What are you looking at", "relaxing", 
+            "Bulging eyes", "Bulging eyes", "Bulging eyes", "Still bulging eyes", 
+            "wo dui ni ai ai ai bu wan", "tasty food happy dad", "very proud pose!", 
+            "before eating pose", "Happy birthday!", "Blooming flower", "SEB team", 
+            "what a cute couple (you and mother)", "got the anti-stupid medication but didnt work", 
+            "Cool looking dinosaur!", "The two dads", "Heheh tooth fairy... THE END!"
         ];
 
-        const photos = photoData.map((data, i) => ({
-            idx: i + 1,
-            px: (Math.random() - 0.5) * 2000,
-            py: (Math.random() - 0.5) * 2000,
-            msg: data.msg,
-            v: false
-        }));
+        // Create exactly 27 houses
+        const houses = [];
+        for(let i = 1; i <= 27; i++) {
+            houses.push({
+                id: i,
+                px: (Math.random() - 0.5) * 2200,
+                py: (Math.random() - 0.5) * 2200,
+                v: false
+            });
+        }
 
         mImg.onclick = () => {
-            if(currentPhotoIdx === 8) mImg.src = "ugly photo8 2.jpg";
+            if(currentHouseIdx === 8) {
+                mImg.src = "ugly photo8 2.jpg";
+                mText.innerText = photoMessages[8]; // Change to "Truly a princess"
+            }
         };
 
         function closeM() { 
             modal.style.display = 'none'; mVid.pause(); paused = false; 
-            if(photos.every(p => p.v)) document.getElementById('victory-screen').style.display = 'flex';
+            if(houses.every(h => h.v)) document.getElementById('victory-screen').style.display = 'flex';
         }
 
         const bind = (id, k) => {
@@ -141,38 +132,38 @@
                 ctx.fillStyle = "yellow"; ctx.fillRect(hx+60, hy+90, 30, 60);
                 if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 80) { state = 'indoor'; x = 0; y = 0; }
             } else {
-                photos.forEach(p => {
-                    const sx = w/2 + p.px + x, sy = h/2 + p.py + y;
-                    ctx.fillStyle = p.v ? "#555" : (p.idx === 1 ? "#3498db" : "#e74c3c");
+                houses.forEach(hItem => {
+                    const sx = w/2 + hItem.px + x, sy = h/2 + hItem.py + y;
+                    ctx.fillStyle = hItem.v ? "#555" : (hItem.id === 1 ? "#3498db" : "#e74c3c");
                     ctx.fillRect(sx, sy, 45, 45);
-                    ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.fillText(p.idx === 1 ? "VIDEO" : p.idx, sx + 5, sy + 25);
+                    ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; 
+                    ctx.fillText(hItem.id === 1 ? "VIDEO" : hItem.id, sx + 5, sy + 25);
 
-                    if(Math.hypot(w/2 - (sx+22), h/2 - (sy+22)) < 40 && !p.v) {
-                        p.v = true; paused = true; currentPhotoIdx = p.idx;
-                        document.getElementById('m-title').innerText = p.idx === 1 ? "Special Video" : "Memory #" + p.idx;
-                        mText.innerText = p.msg;
+                    if(Math.hypot(w/2 - (sx+22), h/2 - (sy+22)) < 40 && !hItem.v) {
+                        hItem.v = true; paused = true; currentHouseIdx = hItem.id;
+                        document.getElementById('m-title').innerText = hItem.id === 1 ? "Special Video" : "Memory #" + hItem.id;
                         
-                        if(p.idx === 1) {
+                        if(hItem.id === 1) {
                             mImg.style.display = "none"; mVid.style.display = "block";
                             mVid.src = "ugly photo1.mp4";
+                            mText.innerText = photoMessages[0];
                         } else {
                             mVid.style.display = "none"; mImg.style.display = "block";
                             
-                            // CLEAN LOGIC: 
-                            // House 8 = ugly photo8.jpg
-                            // House 9 = ugly photo8 2.jpg
-                            // Everything else = ugly photo + its own number
-                            let finalFile = "";
-                            if (p.idx === 9) {
-                                finalFile = "ugly photo8 2.jpg";
+                            // SYNC LOGIC:
+                            // Houses 1-8 use photos 1-8.
+                            // House 8 has a click-swap to 8_2.
+                            // Houses 9-27 use photos 10-28.
+                            if (hItem.id <= 8) {
+                                mImg.src = "ugly photo" + hItem.id + ".jpg";
+                                mText.innerText = photoMessages[hItem.id - 1];
                             } else {
-                                finalFile = "ugly photo" + p.idx + ".jpg";
+                                mImg.src = "ugly photo" + (hItem.id + 1) + ".jpg";
+                                mText.innerText = photoMessages[hItem.id];
                             }
-                            
-                            mImg.src = encodeURI(finalFile);
                         }
                         modal.style.display = 'block';
-                        document.getElementById('instruction').innerText = "Found: " + photos.filter(i=>i.v).length + " / 28";
+                        document.getElementById('instruction').innerText = "Found: " + houses.filter(h=>h.v).length + " / 27";
                     }
                 });
             }
