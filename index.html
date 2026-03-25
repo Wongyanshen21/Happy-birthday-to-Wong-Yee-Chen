@@ -11,32 +11,41 @@
         #controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 20; }
         .row { display: flex; gap: 40px; }
         .btn { width: 65px; height: 65px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid white; color: white; font-size: 25px; display: flex; justify-content: center; align-items: center; user-select: none; }
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px; border-radius: 15px; text-align: center; width: 80%; max-width: 350px; z-index: 100; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #modal img { width: 100%; border-radius: 10px; }
-        #modal button { margin-top: 10px; padding: 10px 20px; background: #4a7c44; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px; border-radius: 15px; text-align: center; width: 85%; max-width: 350px; z-index: 100; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #modal img, #modal video { width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+        #modal button { margin-top: 15px; padding: 10px 20px; background: #4a7c44; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        #victory-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1a1a1a, #4a0e0e); z-index: 200; color: gold; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
-        <p id="instruction">Go inside the house to find your memories!</p>
+        <p id="instruction">Enter the house to start the quest!</p>
     </div>
 
     <div id="controls">
         <div class="btn" id="up">▲</div>
-        <div class="row">
-            <div class="btn" id="left">◀</div>
-            <div class="btn" id="right">▶</div>
-        </div>
+        <div class="row"><div class="btn" id="left">◀</div><div class="btn" id="right">▶</div></div>
         <div class="btn" id="down">▼</div>
     </div>
 
     <div id="modal">
         <h2 id="m-title"></h2>
-        <img id="m-img" src="">
-        <p id="m-text">Ugly man lol</p>
+        <div id="media-container">
+            <img id="m-img" src="" style="cursor: pointer;">
+            <video id="m-video" controls></video>
+        </div>
+        <p id="m-text" style="color: #333; font-weight: bold; margin-top: 10px;"></p>
         <button onclick="closeM()">Back to Search</button>
+    </div>
+
+    <div id="victory-screen">
+        <h1 style="font-size: 60px;">🎂✨🎁</h1>
+        <h1>MISSION COMPLETE!</h1>
+        <h2 style="color: white;">Happy Birthday to the Best Dad!</h2>
+        <p style="color: #ccc; padding: 20px; font-size: 18px;">You found all 28 memories. We love you so much!</p>
+        <button onclick="location.reload()" style="padding: 12px 25px; background: gold; color: black; border: none; border-radius: 8px; font-weight: bold;">Play Again</button>
     </div>
 
     <canvas id="g"></canvas>
@@ -46,30 +55,52 @@
         const ctx = canvas.getContext('2d');
         const modal = document.getElementById('modal');
         const mImg = document.getElementById('m-img');
+        const mVid = document.getElementById('m-video');
+        const mText = document.getElementById('m-text');
 
         let w = window.innerWidth, h = window.innerHeight;
         canvas.width = w; canvas.height = h;
 
-        // Game States: 'overworld' or 'indoor'
         let state = 'overworld';
         let x = 0, y = 0, paused = false;
+        let currentPhotoIdx = 0;
         const keys = { u: false, d: false, l: false, r: false };
 
-        // The Overworld House
-        const mainHouse = { x: 0, y: -300, size: 150 };
+        const photoData = [
+            { msg: "You and Olivia have the same amount of laziness" }, // 1 (VIDEO)
+            { msg: "Dream come true!!" }, { msg: "TUMIIII" }, { msg: "quack quack you look like it" }, 
+            { msg: "Congrats on winnning the prize of doing nothing!!" }, { msg: "Atleast a single picture of you and a celebrity :P" }, 
+            { msg: "What are you looking at" }, 
+            { msg: "Princess Paul (Click for her true form!)" }, // 8 (Zoom Egg)
+            { msg: "Truly a princess" }, // 9 (Uses ugly photo8 2.jpg)
+            { msg: "China would be proud of that eyesight" }, { msg: "What are you looking at" },
+            { msg: "relaxing" }, { msg: "Bulging eyes" }, { msg: "Bulging eyes" }, { msg: "Bulging eyes" },
+            { msg: "Still bulging eyes" }, { msg: "wo dui ni ai ai ai bu wan" }, { msg: "tasty food happy dad" },
+            { msg: "very proud pose!" }, { msg: "before eating pose" }, { msg: "Happy birthday!" },
+            { msg: "Blooming flower" }, { msg: "SEB team" }, { msg: "what a cute couple (you and mother)" },
+            { msg: "got the anti-stupid medication but didnt work" }, { msg: "Cool looking dinosaur!" },
+            { msg: "The two dads" }, { msg: "Heheh tooth fairy" }
+        ];
 
-        // Indoor Photos
-        const photos = [];
-        for(let i=1; i<=28; i++) {
-            photos.push({
-                idx: i,
-                px: (Math.random() - 0.5) * 1500,
-                py: (Math.random() - 0.5) * 1500,
-                v: false
-            });
+        const photos = photoData.map((data, i) => ({
+            idx: i + 1,
+            px: (Math.random() - 0.5) * 2000,
+            py: (Math.random() - 0.5) * 2000,
+            msg: data.msg,
+            v: false
+        }));
+
+        // Swap for Photo 8 Zoom Egg
+        mImg.onclick = () => {
+            if(currentPhotoIdx === 8) {
+                mImg.src = "ugly photo8 2.jpg";
+            }
+        };
+
+        function closeM() { 
+            modal.style.display = 'none'; mVid.pause(); paused = false; 
+            if(photos.every(p => p.v)) document.getElementById('victory-screen').style.display = 'flex';
         }
-
-        function closeM() { modal.style.display = 'none'; paused = false; }
 
         const bind = (id, k) => {
             const el = document.getElementById(id);
@@ -80,68 +111,47 @@
         window.onmouseup = window.ontouchend = () => { keys.u = keys.d = keys.l = keys.r = false; };
 
         function draw() {
-            // Background color changes based on location
-            ctx.fillStyle = state === 'overworld' ? "#4a7c44" : "#f3e5ab"; // Green grass vs Wood floor
+            ctx.fillStyle = state === 'overworld' ? "#4a7c44" : "#2c3e50";
             ctx.fillRect(0, 0, w, h);
 
             if(!paused) {
-                if(keys.u) y += 12; if(keys.d) y -= 12;
-                if(keys.l) x += 12; if(keys.r) x -= 12;
+                if(keys.u) y += 13; if(keys.d) y -= 13;
+                if(keys.l) x += 13; if(keys.r) x -= 13;
             }
 
             if (state === 'overworld') {
-                // DRAW THE MAIN HOUSE
-                const hx = w/2 + mainHouse.x + x;
-                const hy = h/2 + mainHouse.y + y;
-                
-                ctx.fillStyle = "#8b4513";
-                ctx.fillRect(hx, hy, mainHouse.size, mainHouse.size);
-                ctx.fillStyle = "#333"; // Roof
-                ctx.beginPath();
-                ctx.moveTo(hx-20, hy); ctx.lineTo(hx+75, hy-80); ctx.lineTo(hx+170, hy); ctx.fill();
-                ctx.fillStyle = "yellow"; // Door
-                ctx.fillRect(hx+60, hy+90, 30, 60);
-
-                // Check Entrance
-                if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 80) {
-                    state = 'indoor';
-                    x = 0; y = 0; // Reset position inside
-                    document.getElementById('instruction').innerText = "Found: 0 / 28 Photos";
-                    document.getElementById('main-title').innerText = "INSIDE THE HOUSE";
-                }
+                const hx = w/2 + x, hy = h/2 - 300 + y;
+                ctx.fillStyle = "#8b4513"; ctx.fillRect(hx, hy, 150, 150);
+                ctx.fillStyle = "#333"; ctx.beginPath(); ctx.moveTo(hx-20, hy); ctx.lineTo(hx+75, hy-80); ctx.lineTo(hx+170, hy); ctx.fill();
+                ctx.fillStyle = "yellow"; ctx.fillRect(hx+60, hy+90, 30, 60);
+                if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 80) { state = 'indoor'; x = 0; y = 0; }
             } else {
-                // DRAW THE INDOOR MEMORIES
                 photos.forEach(p => {
-                    const sx = w/2 + p.px + x;
-                    const sy = h/2 + p.py + y;
+                    const sx = w/2 + p.px + x, sy = h/2 + p.py + y;
+                    ctx.fillStyle = p.v ? "#555" : (p.idx === 1 ? "#3498db" : "#e74c3c");
+                    ctx.fillRect(sx, sy, 45, 45);
+                    ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.fillText(p.idx === 1 ? "VIDEO" : p.idx, sx + 5, sy + 25);
 
-                    ctx.fillStyle = p.v ? "#ccc" : "#ff006e";
-                    ctx.fillRect(sx, sy, 40, 40);
-                    ctx.fillStyle = "white";
-                    ctx.font = "12px Arial";
-                    ctx.fillText(p.idx, sx + 15, sy + 25);
-
-                    const dist = Math.hypot(w/2 - (sx+20), h/2 - (sy+20));
-                    if(dist < 35 && !p.v) {
-                        p.v = true; paused = true;
-                        document.getElementById('m-title').innerText = "Memory #" + p.idx;
-                        mImg.src = encodeURI("ugly photo" + p.idx + ".jpg");
+                    if(Math.hypot(w/2 - (sx+22), h/2 - (sy+22)) < 40 && !p.v) {
+                        p.v = true; paused = true; currentPhotoIdx = p.idx;
+                        document.getElementById('m-title').innerText = p.idx === 1 ? "Special Video" : "Memory #" + p.idx;
+                        mText.innerText = p.msg;
+                        
+                        if(p.idx === 1) {
+                            mImg.style.display = "none"; mVid.style.display = "block";
+                            mVid.src = "ugly photo1.mp4";
+                        } else {
+                            mVid.style.display = "none"; mImg.style.display = "block";
+                            // IF IT IS PHOTO 9, USE THE ZOOMED VERSION OF 8
+                            mImg.src = (p.idx === 9) ? "ugly photo8 2.jpg" : "ugly photo" + p.idx + ".jpg";
+                        }
                         modal.style.display = 'block';
-                        const count = photos.filter(item => item.v).length;
-                        document.getElementById('instruction').innerText = "Found: " + count + " / 28 Photos";
+                        document.getElementById('instruction').innerText = "Found: " + photos.filter(i=>i.v).length + " / 28";
                     }
                 });
             }
-
-            // DRAW DAD
-            ctx.fillStyle = "#FFD700";
-            ctx.beginPath();
-            ctx.arc(w/2, h/2, 22, 0, Math.PI*2);
-            ctx.fill();
+            ctx.fillStyle = "#FFD700"; ctx.beginPath(); ctx.arc(w/2, h/2, 22, 0, 7); ctx.fill();
             ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
-            ctx.fillStyle = "black"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
-            ctx.fillText("DAD", w/2, h/2 + 5);
-
             requestAnimationFrame(draw);
         }
         draw();
