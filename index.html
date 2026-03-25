@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: v1.7</div>
+    <div id="version-tag">Build: v1.8</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -68,21 +68,20 @@
         let currentHouseId = 0;
         const keys = { u: false, d: false, l: false, r: false };
 
-        // SYNCED LIST FOR BUILD 1.7
         const photoMessages = [
-            "You and Olivia have the same amount of laziness", // 1
-            "Dream come true!!", "TUMIIII", "quack quack you look like it", // 2, 3, 4
-            "Congrats on winnning the prize of doing nothing!!", // 5
-            "Atleast a single picture of you and a celebrity :P", // 6
-            "What are you looking at", // 7
+            "You and Olivia have the same amount of laziness", // 1 (Video)
+            "Dream come true!!", "TUMIIII", "quack quack you look like it", 
+            "Congrats on winnning the prize of doing nothing!!", 
+            "Atleast a single picture of you and a celebrity :P", 
+            "What are you looking at", 
             "Princess Paul (Click for her true form!)", // 8
-            "Truly a princess", // 8_2
+            "Truly a princess", // 8_2 (Internal)
             "China would be proud of that eyesight", // 10
             "What are you looking at", // 11
             "relaxing", // 12
             "Bulging eyes", // 13
             "Bulging eyes", // 14
-            "Still bulging eyes", // 15 <--- MATCHES PHOTO 15
+            "Still bulging eyes", // 15
             "wo dui ni ai ai ai bu wan", // 16
             "tasty food happy dad", // 17
             "very proud pose!", // 18
@@ -94,7 +93,8 @@
             "got the anti-stupid medication but didnt work", // 24
             "Cool looking dinosaur!", // 25
             "The two dads", // 26
-            "Heheh tooth fairy" // 27
+            "Heheh tooth fairy", // Extra placeholder if needed
+            "Santa's elf!" // 28
         ];
 
         const houses = [];
@@ -161,14 +161,13 @@
                         } else {
                             mVid.style.display = "none"; mImg.style.display = "block";
                             
-                            // LOGIC:
-                            // Houses 1-8 use Photo 1-8.
-                            // Houses 9-27 use Photo 10-28.
+                            // HOUSE TO FILE LOGIC
                             let fileNum = (hItem.id <= 8) ? hItem.id : hItem.id + 1;
+                            // HOUSE TO MESSAGE LOGIC
                             let msgIdx = (hItem.id <= 8) ? hItem.id - 1 : hItem.id;
                             
                             mImg.src = "ugly photo" + fileNum + ".jpg";
-                            mText.innerText = photoMessages[msgIdx] || "Happy Birthday!";
+                            mText.innerText = photoMessages[msgIdx] || "Happy Birthday Dad!";
                         }
                         modal.style.display = 'block';
                         document.getElementById('instruction').innerText = "Found: " + houses.filter(h=>h.v).length + " / 27";
