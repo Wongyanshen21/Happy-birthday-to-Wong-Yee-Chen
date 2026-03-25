@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: v1.4</div>
+    <div id="version-tag">Build: v1.7</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -47,7 +47,6 @@
         <h1 style="font-size: 60px;">🎂✨🎁</h1>
         <h1>MISSION COMPLETE!</h1>
         <h2 style="color: white;">Happy Birthday to the Best Dad!</h2>
-        <p style="color: #ccc; padding: 20px; font-size: 18px;">You found all memories. We love you!</p>
         <button onclick="location.reload()" style="padding: 12px 25px; background: gold; color: black; border: none; border-radius: 8px; font-weight: bold;">Play Again</button>
     </div>
 
@@ -66,26 +65,38 @@
 
         let state = 'overworld';
         let x = 0, y = 0, paused = false;
-        let currentHouseIdx = 0;
+        let currentHouseId = 0;
         const keys = { u: false, d: false, l: false, r: false };
 
-        // 28 messages total (8 and 8_2 are combined in House 8)
+        // SYNCED LIST FOR BUILD 1.7
         const photoMessages = [
-            "You and Olivia have the same amount of laziness", // 1 (Video)
-            "Dream come true!!", "TUMIIII", "quack quack you look like it", 
-            "Congrats on winnning the prize of doing nothing!!", "Atleast a single picture of you and a celebrity :P", 
-            "What are you looking at", 
-            "Princess Paul (Click for her true form!)", // 8 (Combined)
-            "Truly a princess", // This message will appear AFTER clicking the zoom on house 8 or we can skip it.
-            "China would be proud of that eyesight", "What are you looking at", "relaxing", 
-            "Bulging eyes", "Bulging eyes", "Bulging eyes", "Still bulging eyes", 
-            "wo dui ni ai ai ai bu wan", "tasty food happy dad", "very proud pose!", 
-            "before eating pose", "Happy birthday!", "Blooming flower", "SEB team", 
-            "what a cute couple (you and mother)", "got the anti-stupid medication but didnt work", 
-            "Cool looking dinosaur!", "The two dads", "Heheh tooth fairy... THE END!"
+            "You and Olivia have the same amount of laziness", // 1
+            "Dream come true!!", "TUMIIII", "quack quack you look like it", // 2, 3, 4
+            "Congrats on winnning the prize of doing nothing!!", // 5
+            "Atleast a single picture of you and a celebrity :P", // 6
+            "What are you looking at", // 7
+            "Princess Paul (Click for her true form!)", // 8
+            "Truly a princess", // 8_2
+            "China would be proud of that eyesight", // 10
+            "What are you looking at", // 11
+            "relaxing", // 12
+            "Bulging eyes", // 13
+            "Bulging eyes", // 14
+            "Still bulging eyes", // 15 <--- MATCHES PHOTO 15
+            "wo dui ni ai ai ai bu wan", // 16
+            "tasty food happy dad", // 17
+            "very proud pose!", // 18
+            "before eating pose", // 19
+            "Happy birthday!", // 20
+            "Blooming flower", // 21
+            "SEB team", // 22
+            "what a cute couple (you and mother)", // 23
+            "got the anti-stupid medication but didnt work", // 24
+            "Cool looking dinosaur!", // 25
+            "The two dads", // 26
+            "Heheh tooth fairy" // 27
         ];
 
-        // Create exactly 27 houses
         const houses = [];
         for(let i = 1; i <= 27; i++) {
             houses.push({
@@ -97,9 +108,9 @@
         }
 
         mImg.onclick = () => {
-            if(currentHouseIdx === 8) {
+            if(currentHouseId === 8) {
                 mImg.src = "ugly photo8 2.jpg";
-                mText.innerText = photoMessages[8]; // Change to "Truly a princess"
+                mText.innerText = photoMessages[8];
             }
         };
 
@@ -140,7 +151,7 @@
                     ctx.fillText(hItem.id === 1 ? "VIDEO" : hItem.id, sx + 5, sy + 25);
 
                     if(Math.hypot(w/2 - (sx+22), h/2 - (sy+22)) < 40 && !hItem.v) {
-                        hItem.v = true; paused = true; currentHouseIdx = hItem.id;
+                        hItem.v = true; paused = true; currentHouseId = hItem.id;
                         document.getElementById('m-title').innerText = hItem.id === 1 ? "Special Video" : "Memory #" + hItem.id;
                         
                         if(hItem.id === 1) {
@@ -150,17 +161,14 @@
                         } else {
                             mVid.style.display = "none"; mImg.style.display = "block";
                             
-                            // SYNC LOGIC:
-                            // Houses 1-8 use photos 1-8.
-                            // House 8 has a click-swap to 8_2.
-                            // Houses 9-27 use photos 10-28.
-                            if (hItem.id <= 8) {
-                                mImg.src = "ugly photo" + hItem.id + ".jpg";
-                                mText.innerText = photoMessages[hItem.id - 1];
-                            } else {
-                                mImg.src = "ugly photo" + (hItem.id + 1) + ".jpg";
-                                mText.innerText = photoMessages[hItem.id];
-                            }
+                            // LOGIC:
+                            // Houses 1-8 use Photo 1-8.
+                            // Houses 9-27 use Photo 10-28.
+                            let fileNum = (hItem.id <= 8) ? hItem.id : hItem.id + 1;
+                            let msgIdx = (hItem.id <= 8) ? hItem.id - 1 : hItem.id;
+                            
+                            mImg.src = "ugly photo" + fileNum + ".jpg";
+                            mText.innerText = photoMessages[msgIdx] || "Happy Birthday!";
                         }
                         modal.style.display = 'block';
                         document.getElementById('instruction').innerText = "Found: " + houses.filter(h=>h.v).length + " / 27";
