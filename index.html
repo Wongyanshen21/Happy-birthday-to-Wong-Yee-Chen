@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: v2.2</div>
+    <div id="version-tag">Build: v2.3</div>
 
     <div id="ui">
         <h1 id="main-title">HAPPY BIRTHDAY DAD!</h1>
@@ -39,7 +39,7 @@
             <img id="m-img" src="" style="cursor: pointer;">
             <video id="m-video" controls></video>
         </div>
-        <p id="m-text" style="color: #333; font-weight: bold; margin-top: 10px; font-size: 1.2em;"></p>
+        <p id="m-text" style="color: #333; font-weight: bold; margin-top: 10px; font-size: 1.1em;"></p>
         <button onclick="closeM()">Back to Search</button>
     </div>
 
@@ -60,7 +60,6 @@
         const mVid = document.getElementById('m-video');
         const mText = document.getElementById('m-text');
 
-        // --- CHARACTER IMAGE SETUP ---
         const charImg = new Image();
         charImg.src = "character.jpg"; 
 
@@ -70,6 +69,7 @@
         let state = 'overworld';
         let x = 0, y = 0, paused = false;
         let currentHouseId = 0;
+        let isJokeHut = false;
         const keys = { u: false, d: false, l: false, r: false };
 
         const dadJokes = [
@@ -77,70 +77,47 @@
             "My wife said I should do lunges to stay in shape. That would be a big step forward.",
             "Why do fathers take an extra pair of socks when they go golfing? In case they get a hole in one!",
             "Singing in the shower is fun until you get soap in your mouth. Then it's a soap opera.",
-            "I thought the dryer was shrinking my clothes. Turns out it was the refrigerator all along.",
             "What do you call a factory that makes okay products? A satisfactory.",
-            "Dear Math, grow up and solve your own problems.",
             "I'm on a seafood diet. I see food and I eat it.",
             "How do you make a tissue dance? You put a little boogie in it.",
             "Why did the bullet end up losing his job? He got fired.",
             "I used to be a baker, but I couldn't make enough dough.",
-            "What did the ocean say to the beach? Nothing, it just waved.",
-            "I tell dad jokes but I have no kids. I'm a faux pa.",
-            "Did you hear about the guy who invented the Lifesaver? They say he made a mint.",
             "I'm reading a book on anti-gravity. It's impossible to put down!",
-            "What's the best thing about Switzerland? I don't know, but the flag is a big plus.",
             "I'm so good at sleeping that I can do it with my eyes closed.",
-            "A skeleton walks into a bar and orders a beer and a mop."
+            "What did the ocean say to the beach? Nothing, it just waved."
         ];
 
         const photoMessages = [
-            "You and Olivia have the same amount of laziness", 
-            "Dream come true!!", "TUMIIII", "quack quack you look like it",  
-            "Congrats on winnning the prize of doing nothing!!",  
-            "Atleast a single picture of you and a celebrity :P",  
-            "What are you looking at",  
-            "Princess Paul (Click for her true form!)", 
-            "Truly a princess", 
-            "China would be proud of that eyesight", 
-            "What are you looking at", 
-            "relaxing", 
-            "Bulging eyes", 
-            "Bulging eyes", 
-            "Still bulging eyes", 
-            "wo dui ni ai ai ai bu wan", 
-            "tasty food happy dad", 
-            "very proud pose!", 
-            "before eating pose", 
-            "Happy birthday!", 
-            "Blooming flower", 
-            "SEB team", 
-            "what a cute couple (you and mother)", 
-            "got the anti-stupid medication but didnt work", 
-            "Cool looking dinosaur!", 
-            "The two dads", 
-            "Heheh tooth fairy", 
-            "Santa's elf!" 
+            "You and Olivia have the same amount of laziness", "Dream come true!!", "TUMIIII", "quack quack you look like it",  
+            "Congrats on winnning the prize of doing nothing!!", "Atleast a single picture of you and a celebrity :P",  
+            "What are you looking at", "Princess Paul (Click for her true form!)", "Truly a princess", 
+            "China would be proud of that eyesight", "What are you looking at", "relaxing", 
+            "Bulging eyes", "Bulging eyes", "Still bulging eyes", "wo dui ni ai ai ai bu wan", 
+            "tasty food happy dad", "very proud pose!", "before eating pose", "Happy birthday!", 
+            "Blooming flower", "SEB team", "what a cute couple (you and mother)", 
+            "got the anti-stupid medication but didnt work", "Cool looking dinosaur!", "The two dads", 
+            "Heheh tooth fairy", "Santa's elf!" 
         ];
 
         const houses = [];
         for(let i = 1; i <= 27; i++) {
-            houses.push({
-                id: i,
-                px: (Math.random() - 0.5) * 2200,
-                py: (Math.random() - 0.5) * 2200,
-                v: false
-            });
+            houses.push({ id: i, px: (Math.random() - 0.5) * 2200, py: (Math.random() - 0.5) * 2200, v: false });
         }
 
         mImg.onclick = () => {
-            if(currentHouseId === 8) {
-                mImg.src = "ugly photo8 2.jpg";
-                mText.innerText = photoMessages[8];
-            }
+            if(currentHouseId === 8) { mImg.src = "ugly photo8 2.jpg"; mText.innerText = photoMessages[8]; }
         };
 
         function closeM() { 
-            modal.style.display = 'none'; mVid.pause(); paused = false; 
+            modal.style.display = 'none'; 
+            mVid.pause(); 
+            paused = false; 
+            
+            // FIX: Nudge player away so they don't re-trigger the entrance immediately
+            if (state === 'overworld') {
+                y -= 100; // Move character down away from the buildings
+            }
+            
             if(houses.every(h => h.v)) document.getElementById('victory-screen').style.display = 'flex';
         }
 
@@ -181,9 +158,13 @@
                 ctx.fillStyle = "#8b4513"; ctx.fillRect(hx, hy, 150, 150);
                 ctx.fillStyle = "#333"; ctx.beginPath(); ctx.moveTo(hx-20, hy); ctx.lineTo(hx+75, hy-80); ctx.lineTo(hx+170, hy); ctx.fill();
                 ctx.fillStyle = "yellow"; ctx.fillRect(hx+60, hy+90, 30, 60);
-                if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 80) { state = 'indoor'; x = 0; y = 0; }
+                
+                // Entrance logic for main house
+                if(Math.hypot(w/2 - (hx+75), h/2 - (hy+75)) < 70 && !paused) { 
+                    state = 'indoor'; x = 0; y = 0; 
+                }
 
-                // --- NEW: THE JOKE HUT ---
+                // Joke Hut
                 const jx = hx + 300, jy = hy + 50;
                 ctx.fillStyle = "#27ae60"; ctx.fillRect(jx, jy, 100, 100);
                 ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.moveTo(jx-10, jy); ctx.lineTo(jx+50, jy-50); ctx.lineTo(jx+110, jy); ctx.fill();
@@ -191,6 +172,7 @@
                 
                 if(Math.hypot(w/2 - (jx+50), h/2 - (jy+50)) < 60 && !paused) {
                     paused = true;
+                    isJokeHut = true;
                     document.getElementById('m-title').innerText = "Dad Joke Dispenser";
                     mImg.style.display = "none"; mVid.style.display = "none";
                     mText.innerText = dadJokes[Math.floor(Math.random() * dadJokes.length)];
