@@ -67,19 +67,34 @@
         const keys = { u: false, d: false, l: false, r: false };
 
         const photoData = [
-            { msg: "You and Olivia have the same amount of laziness" }, // 1 (VIDEO)
-            { msg: "Dream come true!!" }, { msg: "TUMIIII" }, { msg: "quack quack you look like it" }, 
-            { msg: "Congrats on winnning the prize of doing nothing!!" }, { msg: "Atleast a single picture of you and a celebrity :P" }, 
-            { msg: "What are you looking at" }, 
-            { msg: "Princess Paul (Click for her true form!)" }, // 8 (Zoom Egg)
-            { msg: "Truly a princess" }, // 9 (Uses ugly photo8 2.jpg)
-            { msg: "China would be proud of that eyesight" }, { msg: "What are you looking at" },
-            { msg: "relaxing" }, { msg: "Bulging eyes" }, { msg: "Bulging eyes" }, { msg: "Bulging eyes" },
-            { msg: "Still bulging eyes" }, { msg: "wo dui ni ai ai ai bu wan" }, { msg: "tasty food happy dad" },
-            { msg: "very proud pose!" }, { msg: "before eating pose" }, { msg: "Happy birthday!" },
-            { msg: "Blooming flower" }, { msg: "SEB team" }, { msg: "what a cute couple (you and mother)" },
-            { msg: "got the anti-stupid medication but didnt work" }, { msg: "Cool looking dinosaur!" },
-            { msg: "The two dads" }, { msg: "Heheh tooth fairy" }
+            { msg: "You and Olivia have the same amount of laziness" }, // 1
+            { msg: "Dream come true!!" },                               // 2
+            { msg: "TUMIIII" },                                         // 3
+            { msg: "quack quack you look like it" },                    // 4
+            { msg: "Congrats on winnning the prize of doing nothing!!" },// 5
+            { msg: "Atleast a single picture of you and a celebrity :P" },// 6
+            { msg: "What are you looking at" },                         // 7
+            { msg: "Princess Paul (Click for her true form!)" },        // 8
+            { msg: "Truly a princess" },                                // 9
+            { msg: "China would be proud of that eyesight" },           // 10
+            { msg: "What are you looking at" },                         // 11
+            { msg: "relaxing" },                                        // 12
+            { msg: "Bulging eyes" },                                    // 13
+            { msg: "Bulging eyes" },                                    // 14
+            { msg: "Bulging eyes" },                                    // 15
+            { msg: "Still bulging eyes" },                              // 16
+            { msg: "wo dui ni ai ai ai bu wan" },                       // 17
+            { msg: "tasty food happy dad" },                            // 18
+            { msg: "very proud pose!" },                                // 19
+            { msg: "before eating pose" },                              // 20
+            { msg: "Happy birthday!" },                                 // 21
+            { msg: "Blooming flower" },                                 // 22
+            { msg: "SEB team" },                                        // 23
+            { msg: "what a cute couple (you and mother)" },             // 24
+            { msg: "got the anti-stupid medication but didnt work" },   // 25
+            { msg: "Cool looking dinosaur!" },                          // 26
+            { msg: "The two dads" },                                    // 27
+            { msg: "Heheh tooth fairy... THE END!" }                    // 28
         ];
 
         const photos = photoData.map((data, i) => ({
@@ -90,11 +105,8 @@
             v: false
         }));
 
-        // Swap for Photo 8 Zoom Egg
         mImg.onclick = () => {
-            if(currentPhotoIdx === 8) {
-                mImg.src = "ugly photo8 2.jpg";
-            }
+            if(currentPhotoIdx === 8) mImg.src = "ugly photo8 2.jpg";
         };
 
         function closeM() { 
@@ -142,7 +154,7 @@
                             mVid.src = "ugly photo1.mp4";
                         } else {
                             mVid.style.display = "none"; mImg.style.display = "block";
-                            // IF IT IS PHOTO 9, USE THE ZOOMED VERSION OF 8
+                            // FIX: Only House 9 uses the '8 2' file. Everyone else uses their own number.
                             mImg.src = (p.idx === 9) ? "ugly photo8 2.jpg" : "ugly photo" + p.idx + ".jpg";
                         }
                         modal.style.display = 'block';
